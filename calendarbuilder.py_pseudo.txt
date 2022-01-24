@@ -1,0 +1,68 @@
+from tkinter IMPORT *
+
+from tkinter IMPORT ttk
+
+from economiccalendar IMPORT economiccalendar
+
+DEFINE CLASS calendarBuilder():
+
+    calendarlist=economiccalendar.getcalendar()
+
+    DEFINE FUNCTION buildCalendar(self,rootframe):
+
+        root=rootframe
+
+        SET main_frame TO Frame(root)
+
+        main_frame.pack(fill=BOTH,expand=True)
+
+        my_canvas=Canvas(main_frame)
+
+        my_canvas.pack(side=LEFT,fill=BOTH,expand=1)
+
+        SET my_scrollbar TO ttk.Scrollbar(main_frame, orient=VERTICAL, command=my_canvas.yview)
+
+        my_scrollbar.pack(side=RIGHT, fill=Y)
+
+        my_canvas.configure(yscrollcommand=my_scrollbar.set)
+
+        SET my_canvas.bind('<Configure>', lambda e: my_canvas.configure(scrollregion TO my_canvas.bbox("all")))
+
+        SET second_frame TO Frame(my_canvas)
+
+        my_canvas.create_window((0,0), window=second_frame, anchor="nw")
+
+        tablehead=["Date","Hour (UTC)","Country","Content","Previous","Consensus","Forecast"]
+
+        self.calendarlist.insert(0, tablehead)
+
+        FOR row IN range(0,len(self.calendarlist)):
+
+            line=self.calendarlist[row]
+
+            requiredlines=[]
+
+            TRY:
+
+                IF row==0:
+
+                    FOR column IN range(0,len(line)):
+
+                        Button(second_frame,text=str(line[column]),highlightcolor=None,bd=0,relief="flat",anchor="w",takefocus=0).grid(row=row,column=column)
+
+                ELSEIF row!=0:
+
+                    requiredlines=[line[0],line[1],line[2],line[5],line[7],line[8],line[9]]
+
+            except Exception as err:
+
+                PASS
+
+            FOR column IN range(0,len(requiredlines)):
+
+                Button(second_frame,text=str(requiredlines[column]),highlightcolor=None,bd=0,relief="flat",anchor="w",takefocus=0).grid(row=row,column=column)
+
+    DEFINE FUNCTION __init__(self,rootframe):
+
+        self.buildCalendar(rootframe)
+

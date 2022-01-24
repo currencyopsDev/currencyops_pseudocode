@@ -1,0 +1,111 @@
+from tkinter IMPORT *
+
+from tkinter IMPORT ttk
+
+IMPORT numpy as np
+
+IMPORT pandas as pd
+
+IMPORT threading,random,time,threading,queue
+
+from functools IMPORT partial # FOR looping buttons
+
+IMPORT time
+
+IMPORT yfinance as yf
+
+IMPORT threading,queue
+
+from tkinter IMPORT messagebox as msg
+
+from graphbrowser IMPORT get_closing_prices
+
+DEFINE CLASS tableBuilder():
+
+    q=queue.Queue()
+
+    status=""
+
+    DEFINE FUNCTION OUTPUT(self,parityname):
+
+        #msg.showwarning("Warning","Clicked to "+parityname)
+
+        get_closing_prices(parityname)
+
+    DEFINE FUNCTION buildTable(self,rootframe,parities):
+
+        root=rootframe
+
+        FOR widget IN root.winfo_children(): # remove loading label
+
+            widget.destroy()
+
+        SET main_frame TO Frame(root)
+
+        main_frame.pack(fill=BOTH,expand=True)
+
+        my_canvas=Canvas(main_frame)
+
+        my_canvas.pack(side=LEFT,fill=BOTH,expand=1)
+
+        SET my_scrollbar TO ttk.Scrollbar(main_frame, orient=VERTICAL, command=my_canvas.yview)
+
+        my_scrollbar.pack(side=RIGHT, fill=Y)
+
+        my_canvas.configure(yscrollcommand=my_scrollbar.set)
+
+        SET my_canvas.bind('<Configure>', lambda e: my_canvas.configure(scrollregion TO my_canvas.bbox("all")))
+
+        SET second_frame TO Frame(my_canvas)
+
+        my_canvas.create_window((0,0), window=second_frame, anchor="nw")
+
+        tablehead=["Parity","Open","High","Low","Current Value","Updated On"]
+
+        parities.insert(0,tablehead)
+
+        FOR parityrow IN range(0,len(parities)):
+
+            paritydata=parities[parityrow]
+
+            parityname=paritydata[0]
+
+            FOR paritycolumn IN range(0,len(paritydata)):
+
+                Button(second_frame,text=paritydata[paritycolumn],highlightcolor=None,bd=0,relief="flat",anchor="w",takefocus=0,command=partial(self.OUTPUT,parityname)).grid(row=parityrow,column=paritycolumn)
+
+    DEFINE FUNCTION readConfig(self,filepath):
+
+        parities=[]
+
+        f=open(filepath,"r")
+
+        FOR line IN f.readlines():
+
+            TRY:
+
+                line=str(line).strip()
+
+                data=yf.Ticker(line)
+
+                lastinfo=data.history(period="1d",interval="1d")
+
+                lastinfo=lastinfo.tail(1)
+
+                lastprice=str(data.history(period="1d",interval="1m").tail(1)["Close"][0])[:8]
+
+                lastinfo=[line,str(lastinfo["Open"][0])[:8],str(lastinfo["High"][0])[:8],str(lastinfo["Low"][0])[:8],lastprice,str(lastinfo.index.max())[:10]]
+
+                parities.append(lastinfo)
+
+            except Exception as err:
+
+                OUTPUT("Error WHILE fetching "+str(line))
+
+        RETURN parities
+
+    DEFINE FUNCTION __init__(self,mainframe,watchlistfile):
+
+        parities=self.readConfig(watchlistfile)
+
+        self.buildTable(mainframe, parities)

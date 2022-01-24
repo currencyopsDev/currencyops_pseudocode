@@ -1,0 +1,168 @@
+# # Python Project on Currency Converter
+
+
+
+IMPORT requests,sys
+
+from tkinter IMPORT *
+
+IMPORT tkinter as tk
+
+from tkinter IMPORT ttk
+
+IMPORT re
+
+
+
+
+
+DEFINE CLASS RealTimeCurrencyConverter():
+
+    DEFINE FUNCTION __init__(self,url):
+
+            SET self.data TO requests.get(url).json()
+
+            SET self.currencies TO self.data['rates']
+
+
+
+    DEFINE FUNCTION convert(self, from_currency, to_currency, amount): 
+
+        SET initial_amount TO amount 
+
+        IF from_currency != 'USD' : 
+
+            SET amount TO amount / self.currencies[from_currency] 
+
+  
+
+        # limiting the precision to 4 decimal places 
+
+        SET amount TO round(amount * self.currencies[to_currency], 4) 
+
+        RETURN amount
+
+
+
+DEFINE CLASS App(tk.Tk):
+
+
+
+    DEFINE FUNCTION __init__(self, converter):
+
+        tk.Tk.__init__(self)
+
+        self.call("source", sys.path[0]+"/azure.tcl")
+
+        self.call("set_theme", "dark")
+
+        self.winfo_toplevel().title('Currency Converter')
+
+        SET self.currency_converter TO converter
+
+        style=ttk.Style()
+
+        style.map('TCombobox', selectbackground=[('readonly', NONE)])
+
+        SET #self.configure(background TO 'blue')
+
+        self.geometry("500x200")
+
+
+
+        SET self.date_label TO Label(self, text TO f"1 Turkish Lira equals TO {self.currency_converter.convert('TRY','USD',1)} USD \n Date : {self.currency_converter.data['date']}")
+
+        SET self.date_label.place(x TO 160, y= 20)
+
+
+
+        # Entry box
+
+        SET valid TO (self.register(self.restrictNumberOnly), '%d', '%P')
+
+        SET self.amount_field TO ttk.Entry(self, justify TO tk.CENTER,validate='key', validatecommand=valid,width=12)
+
+        SET self.converted_amount_field_entry TO ttk.Entry(self, justify TO tk.CENTER,validate='key', validatecommand=valid,width=12)
+
+
+
+        # dropdown
+
+        SET self.from_currency_variable TO StringVar(self)
+
+        self.from_currency_variable.set("TRY") # default value
+
+        SET self.to_currency_variable TO StringVar(self)
+
+        self.to_currency_variable.set("USD") # default value
+
+        SET self.from_currency_dropdown TO ttk.Combobox(self, textvariable=self.from_currency_variable,values=list(self.currency_converter.currencies.keys()), state TO 'readonly', width TO 12, justify TO tk.CENTER)
+
+        SET self.to_currency_dropdown TO ttk.Combobox(self, textvariable=self.to_currency_variable,values=list(self.currency_converter.currencies.keys()), state TO 'readonly', width TO 12, justify TO tk.CENTER)
+
+
+
+        # placing
+
+        SET self.from_currency_dropdown.place(x TO 30, y= 100)
+
+        SET self.amount_field.place(x TO 30, y TO 150)
+
+        SET self.to_currency_dropdown.place(x TO 350, y= 100)
+
+        SET #self.converted_amount_field.place(x TO 346, y TO 150)
+
+        SET self.converted_amount_field_entry.place(x TO 350, y TO 150)
+
+        
+
+        # Convert button
+
+        SET self.convert_button TO ttk.Button(self, text TO "Convert", command TO self.perform) 
+
+        SET self.convert_button.place(x TO 200, y TO 150)
+
+
+
+    DEFINE FUNCTION perform(self):
+
+        SET amount TO float(self.amount_field.get())
+
+        SET from_curr TO self.from_currency_variable.get()
+
+        SET to_curr TO self.to_currency_variable.get()
+
+
+
+        SET converted_amount TO self.currency_converter.convert(from_curr,to_curr,amount)
+
+        SET converted_amount TO round(converted_amount, 2)
+
+        self.converted_amount_field_entry.delete("0",END)
+
+        self.converted_amount_field_entry.insert(0,str(converted_amount))
+
+    
+
+    DEFINE FUNCTION restrictNumberOnly(self, action, string):
+
+        SET regex TO re.compile(r"[0-9,]*?(\.)?[0-9,]*$")
+
+        SET result TO regex.match(string)
+
+        RETURN (string EQUALS "" or (string.count('.') <= 1 and result is not None))
+
+
+
+DEFINE FUNCTION openConverter():
+
+    SET url TO 'https://api.exchangerate-api.com/v4/latest/USD'
+
+    SET converter TO RealTimeCurrencyConverter(url)
+
+    App(converter)
+
+    mainloop()
+
+
+

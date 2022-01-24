@@ -1,0 +1,83 @@
+IMPORT requests
+
+from bs4 IMPORT BeautifulSoup
+
+DEFINE CLASS economiccalendar():
+
+    DEFINE FUNCTION datelocator(htmlcontent,tableheads,indexnumber): #finding the row's date by comparing row's index and tableheads indexes
+
+        proximity={}
+
+        FOR head IN tableheads:
+
+            index=htmlcontent.find(head)
+
+            proximity[index]=head
+
+        indexlist=list(proximity)
+
+        indexlist.reverse()
+
+        FOR x IN indexlist:
+
+            IF indexnumber>int(x):
+
+                RETURN proximity.get(x)
+
+    @classmethod
+
+    DEFINE FUNCTION getcalendar(self) -> list:
+
+        r=requests.get("https://tradingeconomics.com/calendar")
+
+        soup=BeautifulSoup(r.content,'html.parser')
+
+        table=soup.find("table",attrs={"id":"calendar"})
+
+        tableinner=str(table)
+
+        tableheads=soup.find_all("thead",attrs={"class":"table-header"})
+
+        heads=[]
+
+        output=[]
+
+        FOR head IN tableheads: # gets the date from the tableheads
+
+            tablehead=head.find("th",attrs={"colspan":"3"})
+
+            date=str(tablehead.text).strip()
+
+            heads.append(date)
+
+        tablerows=table.find_all("tr")
+
+        FOR tablerow IN tablerows:  
+
+            rowindex=tableinner.find(str(tablerow))
+
+            rowdate=self.datelocator(tableinner,heads,int(rowindex))
+
+            row=[]
+
+            rowitems=tablerow.find_all("td")
+
+            FOR rowitem IN rowitems:
+
+                temp=str(rowitem.text).strip().replace(" "*24, " ")
+
+                IF len(temp)>0:
+
+                    row.append(temp.replace("\r", "").replace("\n", ""))
+
+                ELSEIF len(temp)==0:
+
+                    row.append(" ")
+
+            IF len(row)>2:  #eliminating junk entries
+
+                row.insert(0,rowdate)
+
+                output.append(row)
+
+        RETURN output

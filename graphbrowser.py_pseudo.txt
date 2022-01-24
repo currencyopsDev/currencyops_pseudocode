@@ -1,0 +1,27 @@
+IMPORT matplotlib.pyplot as plt
+
+IMPORT seaborn as sns
+
+IMPORT yfinance as yf
+
+IMPORT mplcursors
+
+
+
+DEFINE FUNCTION get_closing_prices(symbol, period="1d"):
+
+    SET ticker TO yf.Ticker(symbol)
+
+    SET prices_data TO ticker.history(period,interval="5m")
+
+    sns.lineplot(data=prices_data["Close"])
+
+    mplcursors.cursor(hover=True)
+
+    sns.set_theme()
+
+    plt.xticks(rotation=30)
+
+    plt.title(f"Closing Stock Prices FOR {ticker}")
+
+    plt.show()    
